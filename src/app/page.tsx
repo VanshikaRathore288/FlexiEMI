@@ -28,7 +28,10 @@ export default function Home() {
   useEffect(() => {
     fetch("/api/products")
       .then(r => r.json())
-      .then(setProducts)
+      .then(data => {
+        if (Array.isArray(data)) setProducts(data);
+      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

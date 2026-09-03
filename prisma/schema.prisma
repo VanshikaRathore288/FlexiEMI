@@ -14,8 +14,11 @@ model Product {
   description String?
   mrp         Float
   price       Float
-  imageUrl    String
-  finishes    String[]  
+  images      String    // JSON array of image URLs
+  finishes    String    // JSON array of color options
+  variants    String    // JSON array of storage/variant options
+  seller      String    @default("Authorized Seller")
+  soldCount   Int       @default(0)
   emiPlans    EmiPlan[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -29,4 +32,5 @@ model EmiPlan {
   interestRate   Float
   cashback       Float?
   monthlyPayment Float
+  downpayment    Float
 }

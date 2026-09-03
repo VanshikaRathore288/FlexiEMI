@@ -20,9 +20,14 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    return NextResponse.json(product);
+    return NextResponse.json({
+      ...product,
+      images: product.images ? JSON.parse(product.images as string) : [],
+      finishes: product.finishes ? JSON.parse(product.finishes as string) : [],
+      variants: product.variants ? JSON.parse(product.variants as string) : [],
+    });
   } catch (error) {
-    console.error(`Error fetching product:`, error);
+    console.error('Error fetching product:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

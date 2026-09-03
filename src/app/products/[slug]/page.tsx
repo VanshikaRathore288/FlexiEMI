@@ -3,202 +3,439 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
+/* ── Inline SVG Icons ── */
+import React from 'react';
+
+const IconChevronRight = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+  </svg>
+);
+const IconFlame = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg {...props} viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+    <path d="M12.017 0C9.93 4.338 12.784 6.76 10.927 10.418c-1.07-1.138-1.274-2.97-.535-4.44C7.108 8.086 5.966 12.188 8.02 15.408a5.956 5.956 0 009.293-.816 5.956 5.956 0 00.614-4.596c-.387-1.43-1.26-2.668-2.438-3.53.15 1.308-.62 2.554-1.754 3.072C13.954 7.326 14.326 3.58 12.017 0z" />
+  </svg>
+);
+const IconChevronDown = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  </svg>
+);
+const IconShield = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  </svg>
+);
+
+/* ── Types ── */
 type EmiPlan = {
   id: string;
   months: number;
   interestRate: number;
   cashback: number | null;
   monthlyPayment: number;
+  downpayment: number;
 };
 
 type Product = {
   id: string;
+  slug: string;
   name: string;
   description: string;
   mrp: number;
   price: number;
-  imageUrl: string;
+  images: string[];
   finishes: string[];
+  variants: string[];
+  seller: string;
+  soldCount: number;
   emiPlans: EmiPlan[];
 };
 
+/* ── Helpers ── */
+function formatINR(amount: number) {
+  return "₹" + new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(amount);
+}
+
+function safeStr(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (v === null || v === undefined) return "";
+  try { return JSON.stringify(v); } catch { return String(v); }
+}
+
+/* ── Component ── */
 export default function ProductPage() {
-  const { slug } = useParams();
+  const params = useParams();
+  const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
-  const [selectedFinish, setSelectedFinish] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [activeImage, setActiveImage] = useState(0);
+  const [selectedPlan, setSelectedPlan] = useState<EmiPlan | null>(null);
+  const [selectedColor, setSelectedColor] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState("");
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const res = await fetch(`/api/products/${slug}`);
-        if (res.ok) {
-          const data = await res.json();
-          setProduct(data);
-          if (data.finishes && data.finishes.length > 0) {
-            setSelectedFinish(data.finishes[0]);
-          }
-          if (data.emiPlans && data.emiPlans.length > 0) {
-            setSelectedPlanId(data.emiPlans[0].id);
-          }
-        } else {
-          console.error("Failed to fetch product");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (slug) fetchProduct();
+    if (!slug) return;
+    fetch(`/api/products/${slug}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) { setError(data.error); return; }
+        const finishes: string[] = (data.finishes ?? []).map(safeStr).filter(Boolean);
+        const variants: string[] = (data.variants ?? []).map(safeStr).filter(Boolean);
+        setProduct({ ...data, finishes, variants });
+        setSelectedColor(finishes[0] ?? "");
+        setSelectedVariant(variants[0] ?? "");
+        setSelectedPlan(data.emiPlans?.[0] ?? null);
+      })
+      .catch(() => setError("Failed to load product."))
+      .finally(() => setLoading(false));
   }, [slug]);
 
+  /* ── Loading ── */
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-black"></div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div style={{ textAlign: "center" }}>
+          <div style={{
+            width: 40, height: 40, border: "4px solid #f97316",
+            borderTopColor: "transparent", borderRadius: "50%",
+            animation: "spin 0.8s linear infinite", margin: "0 auto 12px"
+          }} />
+          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          <p style={{ color: "#9ca3af", fontSize: 14 }}>Loading product…</p>
+        </div>
       </div>
     );
   }
 
-  if (!product) {
+  if (error || !product) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <h1 className="text-2xl font-semibold text-gray-800">Product not found</h1>
+      <div className="min-h-screen flex items-center justify-center">
+        <div style={{ textAlign: "center" }}>
+          <p style={{ color: "#ef4444", fontSize: 18, fontWeight: 600 }}>{error || "Product not found."}</p>
+          <Link href="/" style={{ color: "#f97316", textDecoration: "underline", marginTop: 8, display: "block" }}>← Back to products</Link>
+        </div>
       </div>
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const discount = product.mrp > product.price
+    ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+    : 0;
+
+  const extraImages = product.images.length > 4 ? product.images.length - 4 : 0;
+  const thumbImages = product.images.slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] py-12 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="mx-auto max-w-5xl rounded-3xl bg-white p-6 md:p-12 shadow-xl flex flex-col md:flex-row gap-12">
-        {/* Left Column: Product Image & Finishes */}
-        <div className="w-full md:w-1/2 flex flex-col items-center">
-          <div className="self-start mb-4">
-            <span className="text-xs font-bold tracking-wider text-red-500 uppercase">New</span>
-            <h1 className="mt-1 text-4xl font-semibold text-gray-900 tracking-tight">{product.name}</h1>
-            <p className="text-lg text-gray-500 mt-1">256GB</p>
+    <div style={{ minHeight: "100vh", backgroundColor: "#fff", fontFamily: "'Inter', sans-serif", color: "#111" }}>
+
+      {/* ── Google Fonts ── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; }
+        .emi-radio:checked + .emi-label { border-color: #f97316; background: #fff7ed; }
+        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+      `}</style>
+
+      {/* ── Navbar ── */}
+      <header style={{
+        borderBottom: "1px solid #e5e7eb", backgroundColor: "#fff",
+        position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
+      }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: 56, display: "flex", alignItems: "center", gap: 16 }}>
+          <Link href="/" style={{ textDecoration: "none" }}>
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#f97316", letterSpacing: "-0.5px" }}>snapmint</span>
+          </Link>
+          <div style={{
+            flex: 1, maxWidth: 400, display: "flex", alignItems: "center",
+            backgroundColor: "#f3f4f6", borderRadius: 8, padding: "8px 12px", gap: 8
+          }}>
+            <svg fill="none" stroke="#9ca3af" viewBox="0 0 24 24" width="16" height="16">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+            </svg>
+            <span style={{ color: "#9ca3af", fontSize: 14 }}>Search for TV, mobiles…</span>
           </div>
-          
-          <div className="relative w-full h-[400px] mt-8">
-            <Image
-              src={product.imageUrl}
-              alt={product.name}
-              fill
-              className="object-contain"
-              priority
-            />
+          <nav style={{ display: "flex", gap: 24, fontSize: 14, fontWeight: 500, color: "#374151", marginLeft: "auto" }}>
+            {["Deals", "Mobiles", "Electronics", "TV, AC & Appliances"].map(c => (
+              <a key={c} href="#" style={{ textDecoration: "none", color: "#374151" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#f97316")}
+                onMouseLeave={e => (e.currentTarget.style.color = "#374151")}>{c}</a>
+            ))}
+          </nav>
+          <div style={{ display: "flex", gap: 10, marginLeft: 16 }}>
+            <button style={{
+              border: "1px solid #e5e7eb", background: "#fff", padding: "6px 14px",
+              borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#374151"
+            }}>For Business</button>
+            <button style={{
+              border: "1px solid #e5e7eb", background: "#fff", padding: "6px 14px",
+              borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#374151"
+            }}>Pay EMI</button>
+            <button style={{
+              backgroundColor: "#f97316", color: "#fff", padding: "6px 18px",
+              borderRadius: 6, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer"
+            }}>Sign Up</button>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Category Nav ── */}
+      <div style={{ borderBottom: "1px solid #f3f4f6", backgroundColor: "#fff" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: 40, display: "flex", alignItems: "center", gap: 28, overflowX: "auto" }}>
+          {["Deals", "Mobiles", "Electronics", "TV,AC & Appliances", "Kitchen & Home", "Health & Wellness", "Fashion", "Baby & Kids", "Sports & Fitness", "Bikes & Cars Accessories"].map(c => (
+            <a key={c} href="#" style={{ fontSize: 13, fontWeight: 500, color: "#374151", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#f97316")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#374151")}>{c}</a>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Breadcrumb ── */}
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "8px 16px", display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#6b7280" }}>
+        <Link href="/" style={{ color: "#6b7280", textDecoration: "none" }}>Shop on EMI</Link>
+        <IconChevronRight />
+        <span>Smart Phones</span>
+        <IconChevronRight />
+        <span>Apple</span>
+        <IconChevronRight />
+        <span style={{ color: "#111", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{product.name}</span>
+      </div>
+
+      {/* ── Main Grid ── */}
+      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "8px 16px 40px", display: "flex", gap: 40, flexWrap: "wrap" }}>
+
+        {/* ── LEFT: Image Panel ── */}
+        <div style={{ flex: "0 0 520px", minWidth: 0, display: "flex", gap: 12 }}>
+
+          {/* Thumbnail strip */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, width: 56 }}>
+            {thumbImages.map((img, i) => (
+              <button key={i} onClick={() => setActiveImage(i)} style={{
+                width: 54, height: 54, borderRadius: 6, border: activeImage === i ? "2px solid #f97316" : "1px solid #e5e7eb",
+                overflow: "hidden", cursor: "pointer", background: "#fafafa", padding: 2, position: "relative"
+              }}>
+                <Image src={img} alt={`thumb-${i}`} fill style={{ objectFit: "contain" }} sizes="54px" />
+              </button>
+            ))}
+            {extraImages > 0 && (
+              <button onClick={() => setActiveImage(4)} style={{
+                width: 54, height: 54, borderRadius: 6, border: "1px solid #e5e7eb",
+                background: "#f3f4f6", cursor: "pointer", fontSize: 13, fontWeight: 700, color: "#374151"
+              }}>+{extraImages}</button>
+            )}
           </div>
 
-          <div className="mt-12 text-center">
-            <p className="text-sm text-gray-500 mb-4">Available in {product.finishes.length} finishes</p>
-            <div className="flex justify-center gap-3">
-              {product.finishes.map((finish) => (
-                <button
-                  key={finish}
-                  onClick={() => setSelectedFinish(finish)}
-                  className={`h-8 w-8 rounded-full border-2 focus:outline-none transition-all ${
-                    selectedFinish === finish ? "border-black scale-110" : "border-transparent ring-1 ring-gray-200"
-                  }`}
-                  style={{
-                    backgroundColor:
-                      finish.toLowerCase().includes("black") || finish.toLowerCase().includes("obsidian")
-                        ? "#2d2d2d"
-                        : finish.toLowerCase().includes("silver") || finish.toLowerCase().includes("porcelain")
-                        ? "#f0f0f0"
-                        : finish.toLowerCase().includes("titanium") || finish.toLowerCase().includes("gray")
-                        ? "#8f8f8f"
-                        : finish.toLowerCase().includes("gold")
-                        ? "#d4af37"
-                        : finish.toLowerCase().includes("violet") || finish.toLowerCase().includes("hazel")
-                        ? "#6a5acd"
-                        : "#ccc",
-                  }}
-                  title={finish}
-                />
+          {/* Main image + dropdowns */}
+          <div style={{ flex: 1 }}>
+            <div style={{
+              position: "relative", backgroundColor: "#fafafa", borderRadius: 12,
+              border: "1px solid #f3f4f6", aspectRatio: "4/3", overflow: "hidden"
+            }}>
+              <Image src={product.images[activeImage] || product.images[0]} alt={product.name}
+                fill style={{ objectFit: "contain", padding: 24 }} priority sizes="460px" />
+              {discount > 0 && (
+                <div style={{
+                  position: "absolute", top: 10, left: 10, backgroundColor: "#22c55e",
+                  color: "#fff", fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 4
+                }}>{discount}% OFF</div>
+              )}
+              <div style={{
+                position: "absolute", bottom: 10, right: 10, backgroundColor: "#fff",
+                border: "1px solid #e5e7eb", borderRadius: 6, padding: "3px 8px",
+                display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700
+              }}>
+                ⭐ 4.2
+              </div>
+            </div>
+
+            {/* Color & Variant dropdowns */}
+            <div style={{ display: "flex", gap: 12, marginTop: 14 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Color</label>
+                <div style={{ position: "relative" }}>
+                  <select value={selectedColor} onChange={e => setSelectedColor(e.target.value)} style={{
+                    width: "100%", border: "1px solid #d1d5db", borderRadius: 8, padding: "10px 32px 10px 12px",
+                    fontSize: 13, backgroundColor: "#fff", cursor: "pointer", color: "#111",
+                    outline: "none", fontFamily: "inherit"
+                  }}>
+                    {product.finishes.map(f => <option key={f}>{f}</option>)}
+                  </select>
+                  <IconChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+                </div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "#6b7280", display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>Variant</label>
+                <div style={{ position: "relative" }}>
+                  <select value={selectedVariant} onChange={e => setSelectedVariant(e.target.value)} style={{
+                    width: "100%", border: "1px solid #d1d5db", borderRadius: 8, padding: "10px 32px 10px 12px",
+                    fontSize: 13, backgroundColor: "#fff", cursor: "pointer", color: "#111",
+                    outline: "none", fontFamily: "inherit"
+                  }}>
+                    {product.variants.map(v => <option key={v}>Storage: {v}</option>)}
+                  </select>
+                  <IconChevronDown style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── RIGHT: Product Info ── */}
+        <div style={{ flex: 1, minWidth: 300, maxWidth: 460 }}>
+
+          {/* Title */}
+          <h1 style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.3, color: "#111", marginBottom: 4 }}>{product.name}</h1>
+          <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 8 }}>
+            (Storage: {selectedVariant}, Color: {selectedColor})
+          </p>
+
+          {/* Sold count */}
+          {product.soldCount > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 14 }}>
+              <IconFlame style={{ color: "#f97316", fill: "#f97316" }} />
+              <span style={{ fontSize: 13, color: "#374151", fontWeight: 500 }}>{product.soldCount}+ sold</span>
+            </div>
+          )}
+
+          {/* Price */}
+          <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 16 }}>
+            <span style={{ fontSize: 30, fontWeight: 800, color: "#111" }}>{formatINR(product.price)}</span>
+            {product.mrp > product.price && (
+              <span style={{ fontSize: 15, color: "#9ca3af", textDecoration: "line-through" }}>{formatINR(product.mrp)}</span>
+            )}
+          </div>
+
+          {/* App banner */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            border: "1px solid #fed7aa", backgroundColor: "#fff7ed", borderRadius: 10,
+            padding: "12px 16px", marginBottom: 14
+          }}>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>Higher Credit Instantly</p>
+              <p style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>Download Snapmint App</p>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {["App Store", "Google Play"].map(s => (
+                <div key={s} style={{
+                  backgroundColor: "#111", color: "#fff", fontSize: 9, fontWeight: 700,
+                  padding: "5px 8px", borderRadius: 5, lineHeight: 1.4, whiteSpace: "pre-wrap", textAlign: "center"
+                }}>{s.replace(" ", "\n")}</div>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Right Column: Pricing & EMI Plans */}
-        <div className="w-full md:w-1/2">
-          <div className="mb-6">
-            <div className="flex items-baseline gap-3">
-              <span className="text-4xl font-bold text-gray-900 tracking-tight">{formatCurrency(product.price)}</span>
-            </div>
-            <div className="text-lg text-gray-500 line-through mt-1 font-medium">{formatCurrency(product.mrp)}</div>
-            <h3 className="text-xl font-medium text-gray-800 mt-6">EMI plans backed by mutual funds</h3>
-          </div>
-
-          <div className="space-y-3 mt-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-            {product.emiPlans.map((plan) => (
-              <div
-                key={plan.id}
-                onClick={() => setSelectedPlanId(plan.id)}
-                className={`cursor-pointer rounded-2xl border-2 p-4 transition-all duration-200 ${
-                  selectedPlanId === plan.id
-                    ? "border-blue-500 bg-blue-50/30 shadow-md"
-                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <div className="font-semibold text-gray-900 text-lg">
-                    {formatCurrency(plan.monthlyPayment)} <span className="text-sm font-normal text-gray-500">x {plan.months} months</span>
-                  </div>
-                  <div className="text-sm font-medium text-gray-700">
-                    {plan.interestRate}% interest
-                  </div>
-                </div>
-                {plan.cashback && plan.cashback > 0 && (
-                  <div className="mt-2 text-sm font-medium text-green-600">
-                    Additional cashback of {formatCurrency(plan.cashback)}
-                  </div>
-                )}
+          {/* Pay only */}
+          {selectedPlan && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              backgroundColor: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 10,
+              padding: "12px 16px", marginBottom: 18
+            }}>
+              <div style={{
+                width: 30, height: 30, backgroundColor: "#f97316", borderRadius: "50%",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+              }}>
+                <span style={{ color: "#fff", fontSize: 14 }}>₹</span>
               </div>
-            ))}
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>
+                Pay only {formatINR(selectedPlan.downpayment)} now
+              </span>
+            </div>
+          )}
+
+          {/* EMI Tenure */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: "#111" }}>Choose EMI Tenure</h2>
+              <span style={{ fontSize: 11, color: "#9ca3af" }}>EMIs starting 3<sup>rd</sup> Oct</span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {product.emiPlans.map((plan) => {
+                const isSelected = selectedPlan?.id === plan.id;
+                return (
+                  <div key={plan.id} onClick={() => setSelectedPlan(plan)} style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "12px 14px", borderRadius: 10, cursor: "pointer",
+                    border: isSelected ? "2px solid #f97316" : "1px solid #e5e7eb",
+                    backgroundColor: isSelected ? "#fff7ed" : "#fff",
+                    transition: "all 0.15s"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      {/* Radio */}
+                      <div style={{
+                        width: 18, height: 18, borderRadius: "50%", border: `2px solid ${isSelected ? "#f97316" : "#9ca3af"}`,
+                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                      }}>
+                        {isSelected && <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#f97316" }} />}
+                      </div>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: "#111" }}>
+                        {formatINR(plan.monthlyPayment)}{" "}
+                        <span style={{ fontWeight: 400, color: "#6b7280" }}>x {plan.months} months</span>
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {plan.cashback !== null && plan.cashback > 0 && (
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, color: "#16a34a",
+                          backgroundColor: "#dcfce7", padding: "2px 8px", borderRadius: 4
+                        }}>
+                          ₹{plan.cashback} cashback
+                        </span>
+                      )}
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, color: "#fff",
+                        backgroundColor: plan.interestRate === 0 ? "#f97316" : "#374151",
+                        padding: "3px 10px", borderRadius: 4
+                      }}>
+                        {plan.interestRate === 0 ? "0% EMI" : `${plan.interestRate}% EMI`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {product.emiPlans.some(p => p.interestRate > 0) && (
+              <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 8 }}>
+                *Total extra payment per month/order value
+              </p>
+            )}
           </div>
 
-          <div className="mt-8">
-            <button
-              onClick={() => {
-                const plan = product.emiPlans.find((p) => p.id === selectedPlanId);
-                alert(`Proceeding with ${plan?.months} months EMI plan for ${product.name} (${selectedFinish}).`);
-              }}
-              className="w-full rounded-full bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg hover:bg-blue-700 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 transition-all duration-200 active:scale-95"
-            >
-              Proceed with selected plan
-            </button>
+          {/* CTA */}
+          <button
+            onClick={() => alert(`Proceeding:\n${product.name}\nColor: ${selectedColor}\nVariant: ${selectedVariant}\nEMI: ${formatINR(selectedPlan?.monthlyPayment ?? 0)} × ${selectedPlan?.months} months`)}
+            style={{
+              width: "100%", backgroundColor: "#f97316", color: "#fff",
+              fontFamily: "inherit", fontSize: 16, fontWeight: 700,
+              padding: "16px 0", borderRadius: 10, border: "none", cursor: "pointer",
+              boxShadow: "0 4px 14px rgba(249,115,22,0.3)", transition: "background 0.15s", marginBottom: 14
+            }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#ea6c0a")}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#f97316")}
+          >
+            Buy on {selectedPlan?.months} months EMI
+          </button>
+
+          {/* Sold by */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <IconShield style={{ color: "#22c55e", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#374151" }}>
+              Sold By:{" "}
+              <span style={{ color: "#f97316", fontWeight: 600, cursor: "pointer" }}>{product.seller}</span>
+              {" "}
+              <IconChevronRight style={{ display: "inline", verticalAlign: "middle" }} />
+            </span>
           </div>
         </div>
       </div>
-      
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f1f1; 
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #d1d5db; 
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #9ca3af; 
-        }
-      `}</style>
     </div>
   );
 }

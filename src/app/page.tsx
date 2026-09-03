@@ -23,6 +23,7 @@ function formatINR(amount: number) {
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     fetch("/api/products")
@@ -51,7 +52,7 @@ export default function Home() {
         position: "sticky", top: 0, zIndex: 50, boxShadow: "0 1px 4px rgba(0,0,0,0.06)"
       }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: 56, display: "flex", alignItems: "center", gap: 16 }}>
-          <span style={{ fontSize: 22, fontWeight: 800, color: "#f97316", letterSpacing: "-0.5px", cursor: "pointer" }}>snapmint</span>
+          <span style={{ fontSize: 22, fontWeight: 800, color: "#f97316", letterSpacing: "-0.5px", cursor: "pointer" }}>FlexiEMI</span>
           <div style={{
             flex: 1, maxWidth: 400, display: "flex", alignItems: "center",
             backgroundColor: "#f3f4f6", borderRadius: 8, padding: "8px 12px", gap: 8
@@ -100,9 +101,16 @@ export default function Home() {
       <div id="products" style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 16px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111" }}>Popular Smartphones on EMI</h2>
-          <a href="#products" style={{ color: "#f97316", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-            View all →
-          </a>
+          {!showAll && products.length > 3 && (
+            <button onClick={() => setShowAll(true)} style={{ color: "#f97316", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+              View all →
+            </button>
+          )}
+          {showAll && (
+            <button onClick={() => setShowAll(false)} style={{ color: "#f97316", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+              Show less ←
+            </button>
+          )}
         </div>
 
         {loading ? (
@@ -116,7 +124,7 @@ export default function Home() {
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 20 }}>
-            {products.map(product => {
+            {(showAll ? products : products.slice(0, 3)).map(product => {
               const discount = product.mrp > product.price
                 ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0;
               const cheapestPlan = product.emiPlans?.reduce((a, b) => a.monthlyPayment < b.monthlyPayment ? a : b);

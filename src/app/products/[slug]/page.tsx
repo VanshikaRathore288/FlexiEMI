@@ -149,7 +149,7 @@ export default function ProductPage() {
       }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: 56, display: "flex", alignItems: "center", gap: 16 }}>
           <Link href="/" style={{ textDecoration: "none" }}>
-            <span style={{ fontSize: 22, fontWeight: 800, color: "#f97316", letterSpacing: "-0.5px" }}>snapmint</span>
+            <span style={{ fontSize: 22, fontWeight: 800, color: "#f97316", letterSpacing: "-0.5px" }}>FlexiEMI</span>
           </Link>
           <div style={{
             flex: 1, maxWidth: 400, display: "flex", alignItems: "center",
@@ -318,7 +318,7 @@ export default function ProductPage() {
           }}>
             <div>
               <p style={{ fontSize: 13, fontWeight: 700, color: "#111" }}>Higher Credit Instantly</p>
-              <p style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>Download Snapmint App</p>
+              <p style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>Download FlexiEMI App</p>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               {["App Store", "Google Play"].map(s => (

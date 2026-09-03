@@ -125,7 +125,7 @@ async function main() {
       mrp: 99999,
       price: 99999,
       images: JSON.stringify([
-        'https://images.unsplash.com/photo-1598327105666-5b89351cb315?q=80&w=800&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop',
       ]),
       finishes: JSON.stringify(['Black', 'White']),
       variants: JSON.stringify(['512 GB']),

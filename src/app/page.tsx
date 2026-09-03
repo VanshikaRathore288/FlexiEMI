@@ -64,13 +64,13 @@ export default function Home() {
           </div>
           <nav style={{ display: "flex", gap: 24, fontSize: 14, fontWeight: 500, marginLeft: "auto" }}>
             {["Deals", "Mobiles", "Electronics"].map(c => (
-              <a key={c} href="#" style={{ color: "#374151" }}>{c}</a>
+              <a key={c} href="#products" style={{ color: "#374151" }} onClick={() => alert(`${c} section coming soon!`)}>{c}</a>
             ))}
           </nav>
           <div style={{ display: "flex", gap: 8, marginLeft: 12 }}>
-            <button style={{ border: "1px solid #e5e7eb", background: "#fff", padding: "6px 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#374151" }}>For Business</button>
-            <button style={{ border: "1px solid #e5e7eb", background: "#fff", padding: "6px 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#374151" }}>Pay EMI</button>
-            <button style={{ backgroundColor: "#f97316", color: "#fff", padding: "6px 18px", borderRadius: 6, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer" }}>Sign Up</button>
+            <button onClick={() => alert("For Business feature coming soon!")} style={{ border: "1px solid #e5e7eb", background: "#fff", padding: "6px 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#374151" }}>For Business</button>
+            <button onClick={() => alert("Pay EMI feature coming soon!")} style={{ border: "1px solid #e5e7eb", background: "#fff", padding: "6px 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#374151" }}>Pay EMI</button>
+            <button onClick={() => alert("Sign Up feature coming soon!")} style={{ backgroundColor: "#f97316", color: "#fff", padding: "6px 18px", borderRadius: 6, fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer" }}>Sign Up</button>
           </div>
         </div>
       </header>
@@ -79,7 +79,7 @@ export default function Home() {
       <div style={{ borderBottom: "1px solid #f3f4f6", backgroundColor: "#fff" }}>
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 16px", height: 40, display: "flex", alignItems: "center", gap: 24, overflowX: "auto" }}>
           {["Deals", "Mobiles", "Electronics", "TV,AC & Appliances", "Kitchen & Home", "Health & Wellness", "Fashion", "Baby & Kids", "Sports & Fitness", "Bikes & Cars Accessories"].map(c => (
-            <a key={c} className="cat-link" href="#" style={{ fontSize: 13, fontWeight: 500, color: "#374151", whiteSpace: "nowrap", flexShrink: 0 }}>{c}</a>
+            <a key={c} className="cat-link" href="#products" onClick={() => alert(`${c} section coming soon!`)} style={{ fontSize: 13, fontWeight: 500, color: "#374151", whiteSpace: "nowrap", flexShrink: 0 }}>{c}</a>
           ))}
         </div>
       </div>

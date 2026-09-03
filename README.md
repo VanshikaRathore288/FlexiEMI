@@ -142,10 +142,3 @@ model EmiPlan {
 5. Click **Deploy**. Vercel will automatically run `npm run build`. 
    *Note: Because Prisma is used, you can add a postinstall script `"postinstall": "prisma generate"` in `package.json` if required by Vercel.*
 
-## Demo Video Instructions
-To fulfill the deliverable requirement:
-1. Use a screen recording tool (like Loom, OBS, or built-in OS tools).
-2. Show the Vercel deployment running (the UI, selecting a product, selecting an EMI plan).
-3. Briefly show the backend code (`app/api/products/[slug]/route.ts`).
-4. Show the PostgreSQL database (e.g., using Neon dashboard or Prisma Studio `npx prisma studio`).
-5. Upload to Google Drive / YouTube and make it public.

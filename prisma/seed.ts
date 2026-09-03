@@ -73,9 +73,9 @@ async function main() {
       mrp: 109999,
       price: 99999,
       images: JSON.stringify([
+        'https://images.unsplash.com/photo-1615822986427-0c91ba0f7ee5?q=80&w=800&auto=format&fit=crop',
         'https://images.unsplash.com/photo-1598327105666-5b89351cb315?q=80&w=800&auto=format&fit=crop',
         'https://images.unsplash.com/photo-1605236453806-6ff36851218e?q=80&w=800&auto=format&fit=crop',
-        'https://images.unsplash.com/photo-1592890288564-76628a30a657?q=80&w=800&auto=format&fit=crop',
       ]),
       finishes: JSON.stringify(['Obsidian', 'Porcelain', 'Hazel', 'Rose Quartz']),
       variants: JSON.stringify(['128 GB', '256 GB', '512 GB']),

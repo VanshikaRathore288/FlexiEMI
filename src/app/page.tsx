@@ -97,10 +97,10 @@ export default function Home() {
       </div>
 
       {/* ── Products Grid ── */}
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 16px" }}>
+      <div id="products" style={{ maxWidth: 1280, margin: "0 auto", padding: "32px 16px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: "#111" }}>Popular Smartphones on EMI</h2>
-          <a href="#" style={{ color: "#f97316", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+          <a href="#products" style={{ color: "#f97316", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
             View all →
           </a>
         </div>
